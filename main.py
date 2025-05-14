@@ -7,31 +7,40 @@ from matplotlib.widgets import RadioButtons, TextBox, Button
 
 # Initialize arrows and traces
 arrows = []
-num_arrows = 2
+num_arrows = 1
 y_limits1 = [-3.5, 3.5]
 x_limits1 = [-3.5,3.5]
 y_limits2 = [-3.5, 3.5]
 x_limits2 = [0,1]
 simulationSpan = 2 * 360
+speed = 1
 trace1_x = []
 trace1_y = []
 trace2_x = []
 trace2_y = []
 
-# Set up the figure and axes
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5),gridspec_kw={'width_ratios': [2, 2]})
 
-ax1.set_position([0.1, 0.1, 0.35, 0.6])  # [left, bottom, width, height]
-ax2.set_position([0.55, 0.1, 0.35, 0.6])  # [left, bottom, width, height]
+# Set up the figure and axes for only ax1 and ax2
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10,10))  # Adjusted figure size for two plots
 
+ax1.set_position([0.1, 0.1, 0.4, 0.4])  # [left, bottom, width, height]
+ax2.set_position([0.55, 0.1, 0.4, 0.4])  # [left, bottom, width, height]
+
+# Configure ax1
 ax1.set_xlim(x_limits1)
 ax1.set_ylim(y_limits1)
 ax1.set_title(f"Vector sum {num_arrows}")
 ax1.grid(True)
+ax1.set_aspect('equal')  # Set equal aspect ratio for ax1
+
+# Configure ax2
 ax2.set_xlim(x_limits2)
 ax2.set_ylim(y_limits2)
-ax2.set_title('Sinousoids sum')
+ax2.set_title('Sinusoids sum')
 ax2.grid(True)
+
+# Remove or comment out any code related to ax3 and ax4
+# For example, if there are traces or updates for ax3 and ax4, ensure they are not included in the update function or elsewhere.
 
 chosen_function = 'square wave'  # Default function
 
@@ -61,43 +70,57 @@ functions = {
 def initialize_arrows(function):
     global arrows, lengths, frequencies
     arrows.clear()
+    #singular_arrows.clear()
     lengths = np.zeros(num_arrows)
     frequencies = np.zeros(num_arrows)
     for i in range(num_arrows):
         n = function['n'](i)
         lengths[i] = function['length'](n)
-        frequencies[i] = function['frequency'](n) 
+        frequencies[i] = function['frequency'](n) * speed
 
         
         arrows.append(RotatingArrow(ax1, 'b-', length=lengths[i], frequency=frequencies[i]))
-
+       # singular_arrows.append(RotatingArrow(ax3, 'r-', length=lengths[i], frequency=frequencies[i]))
+        
 
 initialize_arrows(functions[chosen_function])
 
 trace1, = ax1.plot([], [], 'g-', lw=1)
 trace2, = ax2.plot([], [], 'g-', lw=1)
+#trace3, = ax4.plot([], [], 'g-', lw=1)
 
 def init():
     for arrow in arrows:
         arrow.reset()
+        
     trace1.set_data([], [])
     trace2.set_data([], [])
     return [arrow.arrow for arrow in arrows] + [trace1, trace2]
 
 def update(frame):
     global trace1_x, trace1_y, trace2_x, trace2_y
+    
     x_start, y_start = 0, 0
+
+    # Update arrows and their traces
     for arrow in arrows:
         x_start, y_start = arrow.update(frame, x_start=x_start, y_start=y_start)
+
+   
+    # Update the traces
     trace1_x.append(x_start)
     trace1_y.append(y_start)
     trace2_x.append(frame / simulationSpan)
     trace2_y.append(y_start)
+
+
     trace1.set_data(trace1_x, trace1_y)
     trace2.set_data(trace2_x, trace2_y)
+   
     return [arrow.arrow for arrow in arrows] + [trace1, trace2]
 
 ani = FuncAnimation(fig, update, frames=np.arange(0, simulationSpan, 1), init_func=init, blit=True, interval=20)
+
 
 
 # Update the text label whenever the number of arrows changes
@@ -172,9 +195,9 @@ def update_x_limits1(text):
 # Add input fields for y_limits1 and x_limits1
 ax_y_limits = plt.axes([0.2, 0.9, 0.2, 0.05])  # Position for y_limits1 input field
 ax_x_limits = plt.axes([0.2, 0.8, 0.2, 0.05])  # Position for x_limits1 input field
-ax_radio = plt.axes([0.75, 0.8, 0.15, 0.2], facecolor='lightgoldenrodyellow')  # Position for the radio buttons
-ax_inc = plt.axes([0.92, 0.6, 0.075, 0.075])  # Position for increment button
-ax_dec = plt.axes([0.92, 0.4, 0.075, 0.075])  # Position for decrement button
+ax_radio = plt.axes([0.55, 0.8, 0.25, 0.2], facecolor='lightgoldenrodyellow')  # Position for the radio buttons
+ax_inc = plt.axes([0.92, 0.9, 0.075, 0.075])  # Position for increment button
+ax_dec = plt.axes([0.92, 0.8, 0.075, 0.075])  # Position for decrement button
 
 
 radio = RadioButtons(ax_radio, list(functions.keys()))
